@@ -70,20 +70,46 @@ const downloadZip = async () => {
     const zip = new JSZip()
     const folderName = `images_${props.searchQuery.replace(/\s+/g, '_')}_page${props.page}`
     const concurrency = 6
+    const size = 300
 
-    const fetchBlob = async (url) => {
-      const res = await fetch(url, { mode: 'cors' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return await res.blob()
-    }
+    const loadImage = (url) => new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = (e) => reject(e)
+      img.src = url
+    })
 
-    // fetch in batches to avoid too many parallel requests
+    const canvasToBlob = (canvas) => new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85)
+    })
+
     for (let i = 0; i < images.value.length; i += concurrency) {
-      const batch = images.value.slice(i, i + concurrency).map((img, idx) => {
+      const batch = images.value.slice(i, i + concurrency).map(async (img, idx) => {
         const index = i + idx
-        return fetchBlob(img.download_url)
-          .then((blob) => ({ index, blob, mime: blob.type }))
-          .catch(() => ({ index, blob: null }))
+        try {
+          const imageEl = await loadImage(img.download_url)
+          // create canvas and draw center-cropped square
+          const canvas = document.createElement('canvas')
+          canvas.width = size
+          canvas.height = size
+          const ctx = canvas.getContext('2d')
+
+          const iw = imageEl.naturalWidth
+          const ih = imageEl.naturalHeight
+          const side = Math.min(iw, ih)
+          const sx = Math.floor((iw - side) / 2)
+          const sy = Math.floor((ih - side) / 2)
+
+          // draw cropping
+          ctx.drawImage(imageEl, sx, sy, side, side, 0, 0, size, size)
+
+          const blob = await canvasToBlob(canvas)
+          return { index, blob, mime: blob.type }
+        } catch (e) {
+          console.error('image load/process failed', e)
+          return { index, blob: null }
+        }
       })
 
       const batchResults = await Promise.all(batch)

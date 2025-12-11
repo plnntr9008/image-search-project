@@ -8,7 +8,7 @@ Current status
 - Search is triggered by the "Найти" button (no automatic search while typing).
 
 Planned improvements
-- Add Openverse + Flickr integration to improve search quality for Cyrillic and multi-word queries.
+- Add Openverse + SerpApi (Google Images via SerpApi) integration to improve search quality for Cyrillic and multi-word queries. SerpApi gives better relevance for multi-word and Cyrillic queries but requires a key (optional).
 
 Local setup
 1. Backend
@@ -31,11 +31,11 @@ npm run dev
 ```
 
 Environment variables
-- (optional) `FLICKR_API_KEY` — API key for Flickr (if you choose to enable Flickr integration).
+ - (optional) `SERPAPI_KEY` — API key for SerpApi (if you choose to enable SerpApi integration).
 - Previously used `UNSPLASH_ACCESS_KEY` is no longer required; if present in `backend/.env`, remove it or rotate the key if it was committed publicly.
 
 Notes
 - The repo `.gitignore` ensures `backend/.env` is ignored. If `backend/.env` was committed earlier, do not push the repo to a remote until you've removed secrets from history.
 
 Next steps
-- Implement Openverse + Flickr search in the backend (I can do this next).
+ - Implement Openverse + SerpApi search in the backend (I can do this next).
