@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # optional SerpApi key
+      - SERPAPI_KEY=${SERPAPI_KEY:-}
+    volumes:
+      # mount code for convenience during development; remove for immutable production images
+      - ./backend:/app:ro
+
+  frontend:
+    build: ./frontend
+    ports:
+      # serve SPA on host:5173 (maps to nginx container port 80)
+      - "5173:80"
+    depends_on:
+      - backend
