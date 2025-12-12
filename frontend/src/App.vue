@@ -17,12 +17,11 @@ const handleSearch = (e) => {
 
 <template>
   <div style="text-align: center; padding: 30px; font-family: sans-serif">
-    <h1>Поиск квадратных изображений</h1>
     <form @submit="handleSearch" style="margin: 20px 0">
       <input
         v-model="query"
         type="text"
-        placeholder="Введите запрос (лучше на английском: cat, bike, forest...)"
+        placeholder="Введите запрос"
         style="
           padding: 10px 15px;
           width: 320px;
