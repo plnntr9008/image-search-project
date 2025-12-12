@@ -5,7 +5,12 @@ WORKDIR /app
 # copy package files first for caching
 COPY package.json package-lock.json* ./
 
-# install dependencies (use npm install because package-lock may be absent)
+# install system build deps required by some native modules and bundlers
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential python3 git ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
+
+# install JS dependencies (use npm install when package-lock.json may be absent)
 RUN npm install --silent
 
 # copy rest of source and build
