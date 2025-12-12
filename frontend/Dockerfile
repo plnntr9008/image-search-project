@@ -6,9 +6,15 @@ WORKDIR /app
 # Copy package files first for caching
 COPY package.json package-lock.json* ./
 
+# avoid interactive prompts during apt installs
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install system build deps (optional: python3 may not be needed for pure JS project)
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends build-essential python3 git ca-certificates \
+	&& apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+	   build-essential python3 git ca-certificates \
+	|| (apt-get update && apt-get install -y --no-install-recommends --fix-missing \
+	   build-essential python3 git ca-certificates) \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install JS dependencies
