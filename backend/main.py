@@ -32,7 +32,7 @@ COMMONS_HEADERS = {
 }
 
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
-OPENVERSE_API = "https://api.openverse.engineering/v1/images/"
+OPENVERSE_API = "https://api.openverse.org/v1/images/"
 SERPAPI_URL = "https://serpapi.com/search.json"
 
 
@@ -103,29 +103,42 @@ async def _commons_search_page(client: httpx.AsyncClient, query: str, page: int,
 
 async def _openverse_search_page(client: httpx.AsyncClient, query: str, page: int, per_page: int):
     """Search Openverse and normalize results."""
+    # Openverse limits anonymous page_size to 20. If a higher per_page is requested
+    # by the frontend but we don't have an API key, cap the page_size to 20 to avoid 401.
+    page_size = per_page if per_page <= 20 else 20
     params = {
         "q": query,
         "page": page,
-        "page_size": per_page,
+        "page_size": page_size,
     }
-    resp = await client.get(OPENVERSE_API, params=params)
-    resp.raise_for_status()
-    j = resp.json()
-    results = []
-    for item in j.get("results", []):
-        thumb = item.get("thumbnail") or item.get("url")
-        results.append({
-            "id": item.get("id"),
-            "title": item.get("title") or item.get("creator"),
-            "alt_description": item.get("title") or item.get("creator"),
-            "download_url": thumb,
-            "width": None,
-            "height": None,
-            "raw": item,
-            "source": "openverse",
-        })
-    total = j.get("result_count") or j.get("count") or 0
-    return results, total
+    try:
+        # follow_redirects=True to handle HTTP->HTTPS or domain redirects gracefully
+        resp = await client.get(OPENVERSE_API, params=params, follow_redirects=True)
+        resp.raise_for_status()
+        j = resp.json()
+        results = []
+        for item in j.get("results", []):
+            thumb = item.get("thumbnail") or item.get("url")
+            results.append({
+                "id": item.get("id"),
+                "title": item.get("title") or item.get("creator"),
+                "alt_description": item.get("title") or item.get("creator"),
+                "download_url": thumb,
+                "width": None,
+                "height": None,
+                "raw": item,
+                "source": "openverse",
+            })
+        total = j.get("result_count") or j.get("count") or 0
+        return results, total
+    except Exception as e:
+        # Provide a clearer log message so we know why Openverse failed (network, parse error, etc.)
+        try:
+            text = getattr(e, 'response', None) and e.response.text or ''
+        except Exception:
+            text = ''
+        logging.exception("Openverse request failed: %s %s", str(e), text)
+        return [], 0
 
 
 async def _serpapi_search_page(client: httpx.AsyncClient, query: str, page: int, per_page: int):
