@@ -16,8 +16,8 @@ services:
   frontend:
     build: ./frontend
     ports:
-      # serve SPA on host:80 (maps to nginx container port 80)
-      - "80:80"
+      # serve SPA on host:5173 to avoid conflicts with host nginx; container still listens on 80
+      - "5173:80"
     depends_on:
       - backend
     restart: unless-stopped
