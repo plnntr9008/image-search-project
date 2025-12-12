@@ -1,14 +1,15 @@
 ### Build stage
-FROM node:18-alpine AS build
+FROM node:18-bullseye-slim AS build
 WORKDIR /app
 
 # copy package files first for caching
 COPY package.json package-lock.json* ./
-COPY public ./public
-COPY src ./src
-COPY vite.config.js ./
 
-RUN npm ci --silent
+# install dependencies (use npm install because package-lock may be absent)
+RUN npm install --silent
+
+# copy rest of source and build
+COPY . .
 RUN npm run build
 
 ### Production stage (nginx)
