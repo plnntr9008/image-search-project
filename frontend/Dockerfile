@@ -1,19 +1,20 @@
 ### Build stage
-FROM node:18-bullseye-slim AS build
+### Build stage
+FROM node:22-bullseye-slim AS build
 WORKDIR /app
 
-# copy package files first for caching
+# Copy package files first for caching
 COPY package.json package-lock.json* ./
 
-# install system build deps required by some native modules and bundlers
+# Install system build deps (optional: python3 may not be needed for pure JS project)
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends build-essential python3 git ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
-# install JS dependencies (use npm install when package-lock.json may be absent)
+# Install JS dependencies
 RUN npm install --silent
 
-# copy rest of source and build
+# Copy source and build
 COPY . .
 RUN npm run build
 
