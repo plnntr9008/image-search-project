@@ -24,9 +24,9 @@ const fetchImages = async () => {
   error.value = null
 
   try {
-    // URL-кодирование делает fetch автоматически, но явно используем encodeURIComponent для надёжности
-    const url = `http://localhost:8000/search?query=${encodeURIComponent(props.searchQuery)}&page=${props.page}&per_page=50`
-    const res = await fetch(url)
+  // Используем относительный URL — nginx будет проксировать /search на бэкенд
+  const url = `/search?query=${encodeURIComponent(props.searchQuery)}&page=${props.page}&per_page=50`
+  const res = await fetch(url)
 
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`)
